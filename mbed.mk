@@ -1,69 +1,5 @@
 # Adapted from https://github.com/adamgreen/gcc4mbed
 
-# Variables that must be defined in including makefile.
-#   PROJECT: Name to be given to the output binary for this project.
-#   WORKSPACE_ROOT: The root directory of this repository.
-#
-# Variables that may be optionally set in makefile.
-#   DEVICES: Used to specify a space delimited list of target device(s) that
-#             this application should be built for.  Allowed values include:
-#              LPC1768
-#              LPC11U24
-#              KL25Z
-#              STM32L058
-#              NRF51822
-#              default: STM32L058
-#   SRC: The root directory for the sources of your project.  Defaults to '.'.
-#   BUILD_TYPE: Type of build to produce.  Allowed values are:
-#                  Debug - Build for debugging.  Disables optimizations and
-#                          links in debug MRI runtime.  Best debugging
-#                          experience.
-#                  Release - Build for release with no debug support.
-#                  Checked - Release build with debug support.  Due to
-#                            optimizations, debug experience won't be as good
-#                            as Debug but might be needed when bugs don't
-#                            reproduce in Debug builds.
-#                  default: Release
-#   MBED_LIBS: Specifies which additional official mbed libraries you would
-#              like to use with your application.  These include:
-#               net/eth
-#               rtos
-#               fs
-#               rpc
-#               dsp
-#               USBDevice
-#               USBHost
-#   DEFINES: Project specific #defines to be set when compiling main
-#            application.  Each macro should start with "-D" as required by
-#            GCC.
-#   INCDIRS: Space delimited list of extra directories to use for #include
-#            searches.
-#   LIBS_PREFIX: List of library/object files to prepend to mbed libs.
-#   LIBS_SUFFIX: List of library/object files to append to mbed libs.
-#   GPFLAGS: Additional compiler flags used when building C++ sources.
-#   GCFLAGS: Additional compiler flags used when building C sources.
-#   GAFLAGS: Additional assembler flags used when building assembly language
-#             sources.
-#   OPTIMIZATION: Optional variable that can be set to s, 0, 1, 2, or 3 for
-#                 overriding the compiler's optimization level.  It defaults
-#                 to 2 for Checked and Release buillds and is forced to be 0
-#                 for Debug builds.
-#   VERBOSE: When set to 1, all build commands will be displayed to console.
-#            It defaults to 0 which suppresses the output of the build tool
-#            command lines themselves.
-#
-# Example makefile:
-#       PROJECT        := HelloWorld
-#       SRC            := .
-#       WORKSPACE_ROOT := ../..
-#       INCDIRS        :=
-#       LIBS_PREFIX    :=
-#       LIBS_SUFFIX    :=
-#
-#       include $(WORKSPACE_ROOT)/build/mbed.mk
-#
-###############################################################################
-
 # Check for undefined variables.
 ifndef PROJECT
 $(error makefile must set PROJECT variable.)
@@ -86,7 +22,7 @@ endif
 # Default variables.
 SRC               ?= .
 BUILD_TYPE        ?= Release
-DEVICES           ?= STM320L058
+DEVICES           ?= STM320L053
 ifeq "$(BUILD_TYPE)" "Release"
 OPTIMIZATION      ?= 2
 endif

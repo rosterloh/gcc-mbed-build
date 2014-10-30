@@ -1,5 +1,5 @@
 # Vendor/device for which the library should be built.
-MBED_DEVICE        := STM32L058
+MBED_DEVICE        := STM32L053
 MBED_TARGET        := DISCO_L053C8
 MBED_CLEAN         := $(MBED_DEVICE)-MBED-clean
 
