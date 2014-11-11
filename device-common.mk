@@ -7,8 +7,8 @@ ifeq "$(findstring $(MBED_DEVICE),$(DEVICES))" "$(MBED_DEVICE)"
 # Setup flags that are common across the different pieces of code to be built.
 ###############################################################################
 # Optimization levels to be used for Debug and Release versions of libraries.
-DEBUG_OPTIMIZATION   := 0
-RELEASE_OPTIMIZATION := 2
+DEBUG_OPTIMIZATION   := g
+RELEASE_OPTIMIZATION := s
 
 # Compiler flags used to enable creation of header dependency files.
 DEP_FLAGS := -MMD -MP
@@ -17,13 +17,14 @@ DEP_FLAGS := -MMD -MP
 GCC_DEFINES += -DTOOLCHAIN_GCC_ARM -DTOOLCHAIN_GCC -D__MBED__=1
 
 # Flags to be used with C/C++ compiler that are shared between Debug and Release builds.
-C_FLAGS += -g3 -ffunction-sections -fdata-sections -fno-exceptions -fno-delete-null-pointer-checks -fomit-frame-pointer
-C_FLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-missing-braces
+#C_FLAGS += -g3 -ffunction-sections -fdata-sections -fno-exceptions -fno-delete-null-pointer-checks -fomit-frame-pointer
+#C_FLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-missing-braces
+C_FLAGS += -c -g -fno-common -fmessage-length=0 -Wall -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer
 C_FLAGS += $(GCC_DEFINES)
 C_FLAGS += $(DEP_FLAGS)
 
-# MBED uses -std=gnu++98
-CPP_FLAGS := $(C_FLAGS) -fno-rtti -std=gnu++11
+# MBED uses -std=gnu++98 not -std=gnu++11
+CPP_FLAGS := $(C_FLAGS) -std=gnu++98 -fno-rtti
 C_FLAGS   += -std=gnu99
 
 # Flags used to assemble assembly languages sources.
@@ -35,7 +36,6 @@ MBED_INCLUDES :=
 # Directories where mbed library output files should be placed.
 RELEASE_DIR :=$(LIB_RELEASE_DIR)/$(MBED_TARGET)
 DEBUG_DIR   :=$(LIB_DEBUG_DIR)/$(MBED_TARGET)
-
 
 ###############################################################################
 # Build Main Application
@@ -79,9 +79,11 @@ $(MBED_DEVICE): CPP_FLAGS := -O$(OPTIMIZATION) $(CPP_FLAGS) $(MAIN_DEFINES) $(IN
 $(MBED_DEVICE): ASM_FLAGS := $(ASM_FLAGS) $(GAFLAGS) $(INCLUDE_DIRS)
 
 # Linker Options.
-$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) -Wl,--gc-sections -Wl,--wrap=main --specs=nano.specs -u _printf_float -u _scanf_float
+#$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) -Wl,--gc-sections -Wl,--wrap=main --specs=nano.specs
+$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) -Wl,--gc-sections --specs=nano.specs
+#$(MBED_DEVICE): LD_FLAGS +=	-u _printf_float -u _scanf_float
 $(MBED_DEVICE): LD_FLAGS += -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref
-#	-mfloat-abi=sot
+#	-mfloat-abi=soft
 
 .PHONY: $(MBED_DEVICE) $(MBED_DEVICE)-clean $(MBED_DEVICE)-deploy $(MBED_DEVICE)-size
 

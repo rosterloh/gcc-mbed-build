@@ -24,13 +24,13 @@ SRC               ?= .
 BUILD_TYPE        ?= Release
 DEVICES           ?= STM320L053
 ifeq "$(BUILD_TYPE)" "Release"
-OPTIMIZATION      ?= 2
+OPTIMIZATION      ?= s
 endif
 ifeq "$(BUILD_TYPE)" "Debug"
-OPTIMIZATION      ?= 0
+OPTIMIZATION      ?= g
 endif
 ifeq "$(BUILD_TYPE)" "Checked"
-OPTIMIZATION      ?= 2
+OPTIMIZATION      ?= s
 endif
 
 #  Compiler/Assembler/Linker Paths
@@ -148,7 +148,7 @@ endef
 # Directories where library sources files common to all devices are found. Only perform expansion for libraries that
 # are actually required since this isn't a fast operation.
 ifeq "$(findstring rtos,$(MBED_LIBS))" "rtos"
-    RTOS_DIRS := $(MBED_LIB_SRC_ROOT)/rtos/rtos $(MBED_LIB_SRC_ROOT)/rtos/rtx
+    RTOS_DIRS := $(MBED_LIB_SRC_ROOT)/rtos/rtos $(MBED_LIB_SRC_ROOT)/rtos/rtx/TARGET_CORTEX_M
 else
     RTOS_DIRS :=
 endif
