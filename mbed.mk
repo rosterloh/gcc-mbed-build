@@ -77,16 +77,21 @@ endif
 MBED_LIBS += mbed
 
 
+# Used on linker command line to pull all object files from mbed.a.  Unused modules will be garbage collected away.
+WHOLE_ARCHIVE   := -Wl,-whole-archive
+NOWHOLE_ARCHIVE := -Wl,-no-whole-archive
+all_objs_from_mbed = $(patsubst %mbed.a,$(WHOLE_ARCHIVE) %mbed.a $(NOWHOLE_ARCHIVE),$1)
+
 # Add in library dependencies.
 MBED_LIBS := $(patsubst net/eth,net/lwip net/eth rtos,$(MBED_LIBS))
 MBED_LIBS := $(patsubst USBHost,USBHost fs rtos,$(MBED_LIBS))
 
 
 # Directories where mbed source files are found.
-MBED_LIB_SRC_ROOT    := $(WORKSPACE_ROOT)/mbed-src/libraries
-MBED_SRC_ROOT        := $(MBED_LIB_SRC_ROOT)/mbed
-MBED_CMSIS_ROOT      := $(MBED_SRC_ROOT)/targets/cmsis
-MBED_HAL_ROOT        := $(MBED_SRC_ROOT)/targets/hal
+MBED_LIB_SRC_ROOT		:= $(WORKSPACE_ROOT)/mbed-src/libraries
+MBED_SRC_ROOT       := $(MBED_LIB_SRC_ROOT)/mbed
+MBED_CMSIS_ROOT     := $(MBED_SRC_ROOT)/targets/cmsis
+MBED_HAL_ROOT       := $(MBED_SRC_ROOT)/targets/hal
 
 
 # Root directories for official mbed library output.
@@ -150,14 +155,14 @@ define build_lib #,libname,source_dirs,include_dirs
     # High level rules for building Debug and Release versions of library.
     #########################################################################
     $$(RELEASE_LIB): $$(RELEASE_OBJECTS)
-		@echo Linking release library $@
-		$(Q) $(MKDIR) $$(call convert-slash,$$(dir $$@)) $(QUIET)
-		$(Q) $(AR) -rc $$@ $$+
+				@echo Linking release library $@
+				$(Q) $(MKDIR) $$(call convert-slash,$$(dir $$@)) $(QUIET)
+				$(Q) $(AR) -rc $$@ $$+
 
     $$(DEBUG_LIB): $$(DEBUG_OBJECTS)
-		@echo Linking debug library $@
-		$(Q) $(MKDIR) $$(call convert-slash,$$(dir $$@)) $(QUIET)
-		$(Q) $(AR) -rc $$@ $$+
+				@echo Linking debug library $@
+				$(Q) $(MKDIR) $$(call convert-slash,$$(dir $$@)) $(QUIET)
+				$(Q) $(AR) -rc $$@ $$+
 
 endef
 
@@ -166,10 +171,10 @@ endef
 all: $(DEVICES)
 clean: $(addsuffix -clean,$(DEVICES))
 clean-all: clean
-	@echo Cleaning $(LIB_RELEASE_DIR)
-	$(Q) $(REMOVE_DIR) $(call convert-slash,$(LIB_RELEASE_DIR)) $(QUIET)
-	@echo Cleaning $(LIB_DEBUG_DIR)
-	$(Q) $(REMOVE_DIR) $(call convert-slash,$(LIB_DEBUG_DIR)) $(QUIET)
+		@echo Cleaning $(LIB_RELEASE_DIR)
+		$(Q) $(REMOVE_DIR) $(call convert-slash,$(LIB_RELEASE_DIR)) $(QUIET)
+		@echo Cleaning $(LIB_DEBUG_DIR)
+		$(Q) $(REMOVE_DIR) $(call convert-slash,$(LIB_DEBUG_DIR)) $(QUIET)
 
 
 # Determine supported devices by looking at *-device.mk makefiles.

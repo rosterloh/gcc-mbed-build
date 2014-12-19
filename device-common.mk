@@ -14,7 +14,7 @@ RELEASE_OPTIMIZATION := s
 DEP_FLAGS := -MMD -MP
 
 # Preprocessor defines to use when compiling/assembling code with GCC.
-GCC_DEFINES += $(TOOLCHAIN_DEFINES) -DTOOLCHAIN_GCC -D__MBED__=1
+GCC_DEFINES += $(TOOLCHAIN_DEFINES) -D__MBED__=1
 
 # Flags to be used with C/C++ compiler that are shared between Debug and Release builds.
 C_FLAGS += -g3 -ffunction-sections -fdata-sections -fno-exceptions -fno-delete-null-pointer-checks -fomit-frame-pointer
@@ -84,7 +84,8 @@ $(MBED_DEVICE): CPP_FLAGS := -O$(OPTIMIZATION) $(CPP_FLAGS) $(MAIN_DEFINES) $(IN
 $(MBED_DEVICE): ASM_FLAGS := $(ASM_FLAGS) $(GAFLAGS) $(INCLUDE_DIRS)
 
 # Linker Options.
-$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) --specs=nano.specs -u mbed_sdk_init -u mbed_main
+#$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) --specs=nano.specs -u mbed_sdk_init -u mbed_main
+$(MBED_DEVICE): LD_FLAGS := $(LD_FLAGS) --specs=nano.specs
 $(MBED_DEVICE): LD_FLAGS += -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=main
 ifneq "$(NO_FLOAT_SCANF)" "1"
 $(MBED_DEVICE): LD_FLAGS += -u _scanf_float
@@ -99,85 +100,99 @@ endif
 $(MBED_DEVICE): $(TARGET_BIN) $(OUTDIR)/$(PROJECT).hex $(OUTDIR)/$(PROJECT).disasm $(MBED_DEVICE)-size
 
 $(TARGET_BIN): $(OUTDIR)/$(PROJECT).elf
-	@echo Extracting $@
-	$(Q) $(OBJCOPY) -O binary $< $@
+				@echo Extracting $@
+				$(Q) $(OBJCOPY) -O binary $< $@
 
 $(OUTDIR)/$(PROJECT).hex: $(OUTDIR)/$(PROJECT).elf
-	@echo Extracting $@
-	$(Q) $(OBJCOPY) -R .stack -O ihex $< $@
+				@echo Extracting $@
+				$(Q) $(OBJCOPY) -R .stack -O ihex $< $@
 
 $(OUTDIR)/$(PROJECT).disasm: $(OUTDIR)/$(PROJECT).elf
-	@echo Extracting disassembly to $@
-	$(Q) $(OBJDUMP) -d -f -M reg-names-std --demangle $< >$@
+				@echo Extracting disassembly to $@
+				$(Q) $(OBJDUMP) -d -f -M reg-names-std --demangle $< >$@
 
 $(OUTDIR)/$(PROJECT).elf: $(LSCRIPT) $(OBJECTS) $(LIBS)
-	@echo Linking $@
-	$(Q) $(LD) $(LD_FLAGS) -T$+ $(SYS_LIBS) -o $@
+				@echo Linking $@
+				$(Q) $(LD) $(LD_FLAGS) -T$(call all_objs_from_mbed,$+) $(SYS_LIBS) -o $@
+
+#$(Q) $(LD) $(LD_FLAGS) -T$+ $(SYS_LIBS) -o $@
 
 $(MBED_DEVICE)-size: $(OUTDIR)/$(PROJECT).elf
-	$(Q) $(SIZE) $<
-	@$(BLANK_LINE)
+				$(Q) $(SIZE) $<
+				@$(BLANK_LINE)
 
 $(MBED_DEVICE)-clean: CLEAN_TARGET := $(OUTDIR)
 $(MBED_DEVICE)-clean: PROJECT      := $(PROJECT)
 $(MBED_DEVICE)-clean:
-	@echo Cleaning $(PROJECT)/$(CLEAN_TARGET)
-	$(Q) $(REMOVE_DIR) $(CLEAN_TARGET) $(QUIET)
-	$(Q) $(REMOVE) $(PROJECT).bin $(QUIET)
-	$(Q) $(REMOVE) $(PROJECT).hex $(QUIET)
-	$(Q) $(REMOVE) $(PROJECT).elf $(QUIET)
+				@echo Cleaning $(PROJECT)/$(CLEAN_TARGET)
+				$(Q) $(REMOVE_DIR) $(CLEAN_TARGET) $(QUIET)
+				$(Q) $(REMOVE) $(PROJECT).bin $(QUIET)
+				$(Q) $(REMOVE) $(PROJECT).hex $(QUIET)
+				$(Q) $(REMOVE) $(PROJECT).elf $(QUIET)
+
+# Rule to print out variables for debugging
+print-%:
+				@echo '$*=$($*)'
+
+DEVICE_DEPLOY := copy PROJECT.bin e:\
+
+$(MBED_DEVICE)-deploy: DEPLOY_PREFIX := $(OUTDIR)/$(PROJECT)
+$(MBED_DEVICE)-deploy: $(MBED_DEVICE)
+				@echo Deploying to target.
+				$(Q) $(subst PROJECT,$(call convert-slash,$(DEPLOY_PREFIX)),$(DEVICE_DEPLOY))
 
 $(OUTDIR)/%.o : $(SRC)/%.cpp makefile
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+				@echo Compiling $<
+				$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+				$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(OUTDIR)/%.o : $(SRC)/%.c makefile
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+				@echo Compiling $<
+				$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+				$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+
+$(OUTDIR)/%.o : $(SRC)/%.s makefile
+				@echo Assembling $<
+				$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+				$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(OUTDIR)/%.o : $(SRC)/%.S makefile
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
-
-$(OUTDIR)/%.o : $(SRC)/%.S makefile
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+				@echo Assembling $<
+				$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+				$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 
 ###############################################################################
 # Library mbed.a
 ###############################################################################
 MBED_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_SRC_ROOT)),$(TARGETS_FOR_DEVICE))
-$(eval $(call build_lib,mbed,\
-												$(MBED_DIRS),\
-												$(MBED_DIRS)))
+$(eval $(call build_lib,mbed,$(MBED_DIRS),$(MBED_DIRS)))
 
 ###############################################################################
 # Library rtos.a
 ###############################################################################
 ifeq "$(findstring rtos,$(MBED_LIBS))" "rtos"
-	RTOS_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/rtos),$(TARGETS_FOR_DEVICE))
-	$(eval $(call build_lib,rtos,$(RTOS_DIRS),$(RTOS_DIRS)))
+RTOS_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/rtos),$(TARGETS_FOR_DEVICE))
+ifeq "$(findstring TARGET_M0P,$(TARGETS_FOR_DEVICE))" "TARGET_M0P"
+RTOS_DIRS += $(MBED_LIB_SRC_ROOT)/rtos/rtx/TARGET_CORTEX_M/TARGET_M0P/TOOLCHAIN_GCC
+endif
+$(eval $(call build_lib,rtos,$(RTOS_DIRS),$(RTOS_DIRS)))
 endif
 
 ###############################################################################
 # Library net/lwip.a
 ###############################################################################
 ifeq "$(findstring net/lwip,$(MBED_LIBS))" "net/lwip"
-	LWIP_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/net/lwip),$(TARGETS_FOR_DEVICE))
-	$(eval $(call build_lib,net/lwip,$(LWIP_DIRS),$(LWIP_DIRS)))
+LWIP_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/net/lwip),$(TARGETS_FOR_DEVICE))
+$(eval $(call build_lib,net/lwip,$(LWIP_DIRS),$(LWIP_DIRS)))
 endif
 
 ###############################################################################
 # Library net/eth.a
 ###############################################################################
 ifeq "$(findstring net/eth,$(MBED_LIBS))" "net/eth"
-	ETH_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/net/eth),$(TARGETS_FOR_DEVICE))
-	$(eval $(call build_lib,net/eth,$(ETH_DIRS),$(ETH_DIRS)))
+ETH_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/net/eth),$(TARGETS_FOR_DEVICE))
+$(eval $(call build_lib,net/eth,$(ETH_DIRS),$(ETH_DIRS)))
 endif
 
 ###############################################################################
@@ -224,44 +239,44 @@ endif
 #  Default rules to compile c/c++/assembly language sources to objects.
 #########################################################################
 $(DEBUG_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.c
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Compiling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(RELEASE_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.c
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Compiling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(C_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(DEBUG_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.cpp
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Compiling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(RELEASE_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.cpp
-	@echo Compiling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Compiling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GPP) $(CPP_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(DEBUG_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.s
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Assembling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(RELEASE_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.s
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Assembling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(DEBUG_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.S
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Assembling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 $(RELEASE_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.S
-	@echo Assembling $<
-	$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
-	$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
+		@echo Assembling $<
+		$(Q) $(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+		$(Q) $(GCC) $(ASM_FLAGS) $(MBED_INCLUDES) -c $< -o $@
 
 
 #########################################################################
@@ -271,8 +286,8 @@ $(RELEASE_DIR)/%.o : $(MBED_LIB_SRC_ROOT)/%.S
 
 $(MBED_CLEAN): CLEAN_TARGETS:=$(DEBUG_DIR) $(RELEASE_DIR)
 $(MBED_CLEAN):
-	@echo Cleaning $(CLEAN_TARGETS)
-	$(Q) $(REMOVE_DIR) $(call convert-slash,$(CLEAN_TARGETS)) $(QUIET)
+		@echo Cleaning $(CLEAN_TARGETS)
+		$(Q) $(REMOVE_DIR) $(call convert-slash,$(CLEAN_TARGETS)) $(QUIET)
 
 
 # Pull in all library header dependencies.
@@ -289,6 +304,6 @@ else
 .PHONY: $(MBED_DEVICE)
 
 $(MBED_DEVICE):
-	@#
+		@#
 
 endif # ifeq "$(findstring $(MBED_DEVICE),$(DEVICES))"...
