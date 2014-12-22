@@ -9,7 +9,7 @@ GCC_DEFINES := $(patsubst %,-D%,$(TARGETS_FOR_DEVICE))
 GCC_DEFINES += -D__CORTEX_M0PLUS -DARM_MATH_CM0PLUS
 
 C_FLAGS   := -mcpu=cortex-m0plus -mthumb -mthumb-interwork -msoft-float
-ASM_FLAGS := -mcpu=cortex-m0plus -mthumb -mthumb-interwork -msoft-float
+ASM_FLAGS := -mcpu=cortex-m0plus -mthumb -msoft-float
 LD_FLAGS  := -mcpu=cortex-m0plus -mthumb -msoft-float
 
 # Extra platform specific object files to link into file binary.

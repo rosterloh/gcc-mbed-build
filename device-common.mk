@@ -173,9 +173,6 @@ $(eval $(call build_lib,mbed,$(MBED_DIRS),$(MBED_DIRS)))
 ###############################################################################
 ifeq "$(findstring rtos,$(MBED_LIBS))" "rtos"
 RTOS_DIRS := $(call filter_dirs,$(call recurse_dir,$(MBED_LIB_SRC_ROOT)/rtos),$(TARGETS_FOR_DEVICE))
-ifeq "$(findstring TARGET_M0P,$(TARGETS_FOR_DEVICE))" "TARGET_M0P"
-RTOS_DIRS += $(MBED_LIB_SRC_ROOT)/rtos/rtx/TARGET_CORTEX_M/TARGET_M0P/TOOLCHAIN_GCC
-endif
 $(eval $(call build_lib,rtos,$(RTOS_DIRS),$(RTOS_DIRS)))
 endif
 
